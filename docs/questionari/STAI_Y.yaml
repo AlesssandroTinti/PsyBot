@@ -1,0 +1,31 @@
+questionnaire: STAI-Y
+description: |-
+  The State-Trait Anxiety Inventory - Form Y (STAI-Y), developed by Charles D. Spielberger, assesses anxiety on two dimensions:
+    - **State anxiety**: transient feelings of anxiety experienced at a particular moment.
+    - **Trait anxiety**: general tendency to perceive situations as threatening over time.
+  It comprises 40 items (20 per scale) and is widely used in clinical and research settings.
+
+measures:
+  State_Anxiety: Transient anxiety level
+  Trait_Anxiety: Stable predisposition to anxiety
+
+score_range:
+  State_Anxiety:
+    minimum: 20
+    maximum: 80
+  Trait_Anxiety:
+    minimum: 20
+    maximum: 80
+  Total:
+    minimum: 40
+    maximum: 160
+
+reference_values:
+  State_Anxiety:
+    - 20-37: low state anxiety
+    - 38-44: moderate state anxiety
+    - 45-80: high state anxiety
+  Trait_Anxiety:
+    - 20-37: low trait anxiety
+    - 38-44: moderate trait anxiety
+    - 45-80: high trait anxiety

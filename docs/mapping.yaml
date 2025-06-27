@@ -1,0 +1,72 @@
+STAI-Y:
+  threshold: 65
+  direction: "gte"
+  disorders:
+    - Generalized anxiety disorder
+    - Panic disorder
+    - Social anxiety disorder
+    - Specific phobia
+
+PSQI:
+  threshold: 10
+  direction: "gte"
+  disorders:
+    - Insomnia disorders
+    - Single episode depressive disorder, severe
+    - Chronic insomnia
+    - Short-term insomnia
+
+MEQ:
+  thresholds: [41, 59]
+  direction: "outside"
+  disorders:
+    - Insomnia disorders
+    - Chronic insomnia
+
+BIS:
+  threshold: 25
+  direction: "gt"
+  disorders:
+    - Bipolar or related disorders
+    - Bipolar I disorder
+    - Bipolar II disorder
+    - Cyclothymia
+
+BAS Drive:
+  threshold: 12
+  direction: "gt"
+  disorders:
+    - Bipolar or related disorders
+    - Bipolar I disorder
+    - Cyclothymia
+
+BAS Fun Seeking:
+  threshold: 11
+  direction: "gt"
+  disorders:
+    - Impulsivity-related disorders
+    - Bipolar or related disorders
+    - Bipolar II disorder
+
+BAS Reward Resp.:
+  threshold: 12
+  direction: "gt"
+  disorders:
+    - Bipolar or related disorders
+    - Bipolar I disorder
+
+PANAS PA:
+  threshold: 25
+  direction: "lt"
+  disorders:
+    - Depressive disorders
+    - Recurrent depressive disorder
+    - Generalized anxiety disorder
+
+PANAS NA:
+  threshold: 35
+  direction: "gt"
+  disorders:
+    - Depressive disorders
+    - Generalized anxiety disorder
+    - Recurrent depressive disorder

@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+log.csv
+
+# CSV or tabular outputs
+*.csv
+
+# Model files and checkpoints
+*.gguf
+*.bin
+*.ckpt
+models/
+
+# RAG output / embedding index
+rag_index/
+*.npz
+*.json
+
+# Prompt templates or experiment artifacts
+*.tmp
+*.bak
+*.old
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Jupyter checkpoints (if you ever use .ipynb)
+*.ipynb_checkpoints

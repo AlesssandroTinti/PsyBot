@@ -1,0 +1,10 @@
+gradio
+llama-cpp-python
+pyyaml
+torch
+numpy
+sentence-transformers
+scikit-learn
+requests
+python-dotenv
+spacy

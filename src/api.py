@@ -1,0 +1,150 @@
+import re
+import logging
+import requests
+import urllib.parse
+from config import (
+    SIMILARITY, ICD_CLIENT_ID, ICD_CLIENT_SECRET, AUTH_URL, SEARCH_URL
+)
+
+# Setup basic logging configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("API")
+
+def normalize_icd_entity(ent):
+    """
+    Normalize and clean fields from an ICD-11 API search result.
+
+    Strips HTML from title and definition, extracts MMS code and relevance score.
+
+    Args:
+        ent (dict): Raw ICD-11 entity data.
+
+    Returns:
+        dict: Dictionary with cleaned 'title', 'code', 'definition', and 'score'.
+    """
+
+    raw_title = ent.get("title", {})
+    title = raw_title.get("value") if isinstance(raw_title, dict) else str(raw_title)
+    code = ent.get("code") or ent.get("theCode") or ""
+    definition = ent.get("definition", {}).get("value", "")
+    score = float(ent.get("score", 0))
+
+    # Inline HTML cleaner: strips tags and decodes HTML entities
+    title = re.sub(r"<[^>]+>", "", title or "").strip()
+    definition = re.sub(r"<[^>]+>", "", definition or "").strip()
+
+    return {
+        "title": title,
+        "code": code.strip(),
+        "definition": definition,
+        "score": score
+    }
+
+
+def get_icd_token():
+    """
+    Requests a bearer token from the WHO ICD-11 API using client credentials.
+
+    Returns:
+        str or None: Access token if successful, otherwise None.
+    """
+    data = {
+        'client_id': ICD_CLIENT_ID,
+        'client_secret': ICD_CLIENT_SECRET,
+        'scope': 'icdapi_access',
+        'grant_type': 'client_credentials'
+    }
+    try:
+        response = requests.post(AUTH_URL, data=data, timeout=10)
+        response.raise_for_status()
+        return response.json().get('access_token')
+    except requests.RequestException as e:
+        logger.error(f"Error retrieving ICD token: {e}")  # Error retrieving token
+        return None
+
+def icd_search(term, token):
+    """
+    Sends a search request to the ICD-11 API using a term and returns valid entities.
+
+    Filters results by SIMILARITY threshold.
+
+    Args:
+        term (str): Search keyword or term.
+        token (str): Valid access token for the API.
+
+    Returns:
+        list: List of valid ICD entity results above the similarity threshold.
+    """
+    search_url = f"{SEARCH_URL}{urllib.parse.quote_plus(term)}"
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'API-Version': 'v2',
+        'Accept-Language': 'en'
+    }
+
+    logger.info(f"Final ICD search query: {search_url}")
+
+    try:
+        response = requests.get(search_url, headers=headers, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        logger.error(f"Error during ICD API request: {e}")  # Error during request
+        return []
+
+    try:
+        results = []
+        entities = response.json().get('destinationEntities', [])
+        for entity in entities:
+            if float(entity.get('score', 0)) >= SIMILARITY:
+                results.append(entity)
+        logger.info(f"Found {len(results)} valid results for '{term}'")  # Valid results found
+        return results
+    except Exception as e:
+        logger.error(f"Error parsing JSON response: {e}")  # Error parsing JSON
+        return []
+
+def add_icd_results_to_context(terms):
+    """
+    For each search term, performs an ICD-11 API search and formats results for context injection.
+
+    Args:
+        terms (list of str): List of terms to search in ICD-11.
+
+    Returns:
+        tuple: (context_chunks, rag_results) where:
+            - context_chunks: List of formatted strings for prompt context.
+            - rag_results: List of dicts with score, formatted text, and source title.
+    """
+    icd_token = get_icd_token()
+    context_chunks = []
+    rag_results = []
+
+    for raw_name in terms:
+        name = raw_name.strip()
+        if not name:
+            continue
+        
+        logger.info(f"Searching ICD for: '{name}'")
+        icd_results = icd_search(name, icd_token)
+
+        if not icd_results:
+            logger.info(f"No result ICD for: {name}")
+            continue
+
+        for ent in icd_results:
+            norm = normalize_icd_entity(ent)  # Normalization 
+
+            # Build structured chunk text
+            chunk_text = (
+                f"### {norm['title']} (ICD-11 Code: {norm['code']})\n\n"
+                f"**Definition:** {norm['definition']}\n\n"
+            )
+            
+            context_chunks.append(chunk_text)
+            rag_results.append({
+                "score": norm["score"],
+                "text": chunk_text,
+                "source": norm["title"]
+            })
+
+    return context_chunks, rag_results

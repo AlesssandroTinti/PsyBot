@@ -1,0 +1,26 @@
+questionnaire: PANAS
+description: |-
+  The Positive and Negative Affect Schedule (PANAS), developed by Watson, Clark, and Tellegen (1988),
+  is a self-report questionnaire that measures two primary dimensions of mood:
+    - **Positive Affect (PA)**: reflects the extent to which a person feels enthusiastic, active, and alert.
+    - **Negative Affect (NA)**: reflects subjective distress and unpleasurable engagement.
+  The instrument consists of 20 adjectives (10 per scale), each rated on a 5-point Likert scale.
+  The Italian version has demonstrated good reliability.
+
+measures:
+  Positive_Affect: Positive emotions and engagement
+  Negative_Affect: Negative emotions and distress
+
+score_range:
+  PA:
+    minimum: 10
+    maximum: 50
+  NA:
+    minimum: 10
+    maximum: 50
+
+reference_values:
+  PA:
+    - Higher scores indicate greater positive affect and well-being
+  NA:
+    - Higher scores indicate greater negative affect and psychological distress

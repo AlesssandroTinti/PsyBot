@@ -1,0 +1,22 @@
+questionnaire: MEQ
+description: |-
+  The Morningness-Eveningness Questionnaire (MEQ), developed by Horne and Östberg in 1976,
+  is a self-assessment tool consisting of 19 questions that determine an individual's circadian preference,
+  classifying them as “morning type,” “intermediate type,” or “evening type.”
+  The total score ranges from 16 to 86. 
+  Research has shown that morning types tend to have an earlier circadian peak compared to evening types.
+
+measures: Chronotype (circadian preference)
+
+score_range:
+  Total:
+    minimum: 16
+    maximum: 86
+
+reference_values:
+  Total:
+    - 16-30: definite evening type
+    - 31-41: moderate evening type
+    - 42-58: intermediate type
+    - 59-69: moderate morning type
+    - 70-86: definite morning type

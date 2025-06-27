@@ -1,0 +1,49 @@
+questionnaire: BIS/BAS
+description: |-
+  The BIS/BAS Scales, developed by Carver and White (1994), assess two key
+  motivational systems: the Behavioral Inhibition System (BIS) 
+  and the Behavioral Activation System (BAS). 
+  BIS reflects sensitivity to punishment, avoidance, and anxiety-related responses. 
+  BAS reflects sensitivity to reward and is further divided into three subscales:
+    - **BAS Drive**: persistence toward goal attainment
+    - **BAS Fun Seeking**: spontaneity in approaching new rewarding experiences
+    - **BAS Reward Responsiveness**: positive reaction to reward presence or anticipation
+  The questionnaire includes 24 items:
+    - 7 items for BIS
+    - 13 items for BAS, distributed across the three subscales.
+
+measures:
+  BIS: Sensitivity to punishment and behavioral inhibition
+  BAS Drive: Goal-directed persistence
+  BAS Fun Seeking: Desire for new rewards and willingness to approach
+  BAS Reward Responsiveness: Response to positive outcomes and reward anticipation
+
+score_range:
+  BIS:
+    minimum: 7
+    maximum: 28
+  BAS_total:
+    minimum: 13
+    maximum: 52
+  BAS_subscales:
+    Drive: 
+      minimum: 4 
+      maximum: 16
+    Fun_Seeking: 
+      minimum: 4 
+      maximum: 16
+    Reward_Responsiveness: 
+      minimum: 5 
+      maximum: 20
+
+reference_values:
+  BIS:
+    - Higher scores indicate greater sensitivity to punishment and anxiety proneness.
+  BAS:
+    - Higher total BAS scores reflect stronger motivational drive toward rewards.
+  BAS Drive:
+    - Higher values suggest goal persistence and drive capacity.
+  BAS Fun Seeking:
+    - High scores suggest a propensity for seeking novel pleasurable experiences.
+  BAS Reward Responsiveness:
+    - High scores indicate strong positive affect in response to reward cues.
