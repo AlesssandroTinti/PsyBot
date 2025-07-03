@@ -11,10 +11,8 @@ log.csv
 *.csv
 
 # Model files and checkpoints
-*.gguf
-*.bin
-*.ckpt
-models/
+models/*
+!models/.gitkeep
 
 # RAG output / embedding index
 rag_index/

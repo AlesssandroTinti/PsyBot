@@ -1,12 +1,13 @@
-import os                                   # For environment variables and system operations
-import threading                            # To run graceful shutdown in background
-import time                                 # To delay before shutdown
-import signal                               # To send termination signal
-import gradio as gr                         # For creating the user interface
-import logging                              # For logging informational messages
-from llama_cpp import Llama                 # Local LLM backend
-from rag import YAMLRAGLoader, SimpleRAG    # For RAG functionality
-from api import add_icd_results_to_context  # Helper functions
+import os                                     # For environment variables and system operations
+import threading                              # To run graceful shutdown in background
+import time                                   # To delay before shutdown
+import signal                                 # To send termination signal
+import gradio as gr                           # For creating the user interface
+import logging                                # For logging events and debug/error messages
+from llama_cpp import Llama                   # Local LLM backend
+from rag import YAMLRAGLoader, SimpleRAG      # For RAG functionality
+from api import add_icd_results_to_context    # Helper functions
+from typing import Generator, Any, TypedDict  # For defining structured dictionaries with type hints
 from config import (
     N_CTX, N_BATCH, N_THREADS, TOP_K, MAX_TOKENS, EMBEDDING_MODEL, TEMPERATURE,
     DOCS_PATH, INDEX_PATH, CHUNKS_PATH, LLAMA_MODEL_PATH
@@ -22,6 +23,15 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Setup basic logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("LLM")
+
+# Type Definitions 
+class ChatMessage(TypedDict):
+    role: str
+    content: str
+
+class ChatState(TypedDict):
+    messages: list[ChatMessage]
+
 
 # ---------------------------------------------------
 # Build or load RAG index from questionnaire YAMLs
@@ -62,10 +72,10 @@ if not os.environ.get("SKIP_WARMUP"):
 # ---------------------------------------------------
 # Streamed chat function using RAG + LLM
 # ---------------------------------------------------
-def chat_with_llama(user_input: str):
+def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
     """
     Processes the user's input by:
-      1. Detecting intent (questionnaire vs. general query).
+      1. Detecting intent (diagnosis vs. general query).
       2. Retrieving relevant context using RAG or ICD-11.
       3. Building the prompt and streaming the LLM's response token by token.
 
@@ -81,7 +91,7 @@ def chat_with_llama(user_input: str):
     context_chunks, rag_results = [], []  # Lists for aggregated context
     context = ""  # Full assembled context text
 
-    if question_type == "questionnaire":
+    if question_type == "diagnosis" or question_type == "clinical":
         questionnaires, scores = extract_scores(user_input)  # Parse provided questionnaire found and scores
         disorders = score_to_disorders(scores)  # Map scores to possible disorders
         logger.info(f"Used questionnaires: {questionnaires}")
@@ -117,7 +127,7 @@ def chat_with_llama(user_input: str):
         context = "\n\n".join(context_chunks)
 
     else:
-        # Fallback for other question types (e.g., definitions/diagnoses)
+        # Fallback for other question types (e.g., definitions/diagnoses/interpretations)
         terms = detect_disorders(user_input)
         logger.info(f"Extracted disorder terms: {terms}")
         
@@ -191,7 +201,7 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     # Chat widget
     chatbot = gr.Chatbot( 
         elem_id="chatbox", 
-        height=1150, 
+        height=1100, 
         show_label=False, 
         show_copy_button=True, 
         type='messages'
@@ -211,7 +221,7 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     
     state = gr.State({"messages": []})  # Persistent chat state
 
-    def process(user_input, history):
+    def process(user_input: str, history: ChatState) -> Generator[tuple[Any, list[ChatMessage], ChatState], None, None]:
         """
         Manages full chat lifecycle within the UI:
         - Disables input box and updates conversation history.
@@ -250,6 +260,7 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     def clear_chat():
         """
         Clears the entire chat session.
+
         Resets the input box, empties the chat display, and resets the state.
 
         Returns:

@@ -1,16 +1,27 @@
-import re
-import logging
-import requests
-import urllib.parse
-from config import (
-    SIMILARITY, ICD_CLIENT_ID, ICD_CLIENT_SECRET, AUTH_URL, SEARCH_URL
-)
+import re                     # For regular expressions and pattern matching
+import logging                # For logging events and debug/error messages
+import requests               # For making HTTP requests to the ICD-11 API
+import urllib.parse           # For safely encoding query parameters in URLs
+from typing import TypedDict  # For defining structured dictionaries with type hints
+from config import (SIMILARITY, ICD_CLIENT_ID, ICD_CLIENT_SECRET, AUTH_URL, SEARCH_URL)
 
 # Setup basic logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("API")
 
-def normalize_icd_entity(ent):
+# Type Definitions 
+class ICDEntry(TypedDict):
+    title: str
+    code: str
+    definition: str
+    score: float
+
+class RAGResult(TypedDict):
+    score: float
+    text: str
+    source: str
+
+def normalize_icd_entity(ent: dict) -> ICDEntry:
     """
     Normalize and clean fields from an ICD-11 API search result.
 
@@ -40,13 +51,12 @@ def normalize_icd_entity(ent):
         "score": score
     }
 
-
-def get_icd_token():
+def get_icd_token() -> str | None:
     """
     Requests a bearer token from the WHO ICD-11 API using client credentials.
 
     Returns:
-        str or None: Access token if successful, otherwise None.
+        str/None: Access token if successful, otherwise None.
     """
     data = {
         'client_id': ICD_CLIENT_ID,
@@ -62,7 +72,7 @@ def get_icd_token():
         logger.error(f"Error retrieving ICD token: {e}")  # Error retrieving token
         return None
 
-def icd_search(term, token):
+def icd_search(term: str, token: str) -> list[dict]:
     """
     Sends a search request to the ICD-11 API using a term and returns valid entities.
 
@@ -103,7 +113,7 @@ def icd_search(term, token):
         logger.error(f"Error parsing JSON response: {e}")  # Error parsing JSON
         return []
 
-def add_icd_results_to_context(terms):
+def add_icd_results_to_context(terms: list[str]) -> tuple[list[str], list[RAGResult]]:
     """
     For each search term, performs an ICD-11 API search and formats results for context injection.
 
@@ -111,9 +121,7 @@ def add_icd_results_to_context(terms):
         terms (list of str): List of terms to search in ICD-11.
 
     Returns:
-        tuple: (context_chunks, rag_results) where:
-            - context_chunks: List of formatted strings for prompt context.
-            - rag_results: List of dicts with score, formatted text, and source title.
+        tuple[list,list]: A List of formatted strings for prompt context and a list of dicts with score, formatted text, and source title.
     """
     icd_token = get_icd_token()
     context_chunks = []

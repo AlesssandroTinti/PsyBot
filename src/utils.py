@@ -1,15 +1,27 @@
-import os
-import re
-import yaml
-import spacy
+import os                     # For environment variables and system operations
+import re                     # For regular expressions and pattern matching
+import yaml                   # For parsing YAML files
+import spacy                  # For NLP entity recognition 
+from typing import TypedDict  # For defining structured dictionaries with type hints
 from config import PROMPT_PATH, CSV_LOG_PATH, MAPPING_PATH
-from dict import (
-    COMPARISON_KEYWORDS, QUESTIONNAIRE_KEYWORDS, DISEASE_KEYWORDS, QUESTIONNAIRES, QUESTIONNAIRE_ALIASES
-)
+from keywords import (ALIASES, DISEASE_KEYWORDS, QUESTIONNAIRES_KEYWORDS, KEYWORD_GROUPS)
+
+# Type Definitions 
+class QuestionnaireScores(TypedDict, total=False):
+    STAI_Y: int
+    PSQI: int
+    BIS: int
+    BAS_Drive: int
+    BAS_Fun_Seeking: int
+    BAS_Reward_Resp: int
+    MEQ: int
+    PANAS_PA: int
+    PANAS_NA: int
 
 def detect_disorders(user_input: str) -> list:
     """
     Analyze user input text to extract potential disorder-related expressions.
+
     Combines named entity recognition, noun phrase matching, and lexical heuristics.
 
     Args:
@@ -55,9 +67,10 @@ def detect_disorders(user_input: str) -> list:
 
     return final_terms
 
-def log_to_csv(question, rag_sources, mistral_response):
+def log_to_csv(question: str, rag_sources: list, mistral_response: str) -> None:
     """
     Save the question, associated references, and model output to a CSV log file.
+
     Extracts document names or ICD-11 headers from the RAG results.
 
     Args:
@@ -94,6 +107,7 @@ def log_to_csv(question, rag_sources, mistral_response):
 def load_prompt_template(name: str) -> str:
     """
     Retrieve a text prompt template by filename prefix.
+
     Searches predefined extensions and loads the first match.
 
     Args:
@@ -122,70 +136,68 @@ def load_prompt_template(name: str) -> str:
 def detect_question_type(user_input: str) -> str:
     """
     Classify the type of user inquiry based on its contents.
+
     Uses keyword detection to return a tag for routing.
 
     Args:
         user_input (str): The user-provided natural language query.
 
     Returns:
-        str: One of "definition", "comparison", or "questionnaire".
+        str: One of "definition", "comparison", "interpretation", "diagnosis" or "clinical".
     """
     lowered = user_input.lower()
 
-    # Detects comparison requests based on comparison-related keywords
-    if any(kw in lowered for kw in COMPARISON_KEYWORDS):
-        return "comparison"
-    
-    # Detects diagnostic requests based on questionnaire-related keywords
-    if any(kw in lowered for kw in QUESTIONNAIRE_KEYWORDS):
-        return "questionnaire"
-    
-    # Default: Definition
-    return "definition"
+    # Detects requests based on keywords
+    for label, keywords in KEYWORD_GROUPS.items():
+        if any(kw in lowered for kw in keywords):
+            return label
+        
+    return "definition"  # Base description 
 
-def extract_scores(user_input):
+def extract_scores(user_input: str) -> tuple[list[str], QuestionnaireScores]:
     """
     Identify questionnaire results in the user text.
+
     Supports aliases and flexible formatting with colons, equals, or spaces.
 
     Args:
         user_input (str): Natural language text with embedded scores.
 
     Returns:
-        tuple: A list of unique normalized test names, and a dict of raw scores.
+        tuple[list,dict]: A list of unique normalized test names, and a dict of raw scores.
     """
     results = {}
     questionnaires = set()
 
-    for test in QUESTIONNAIRES:
-        escaped_test = re.escape(test).replace(r"\\ ", r"\\s+")  # Convert test name to regex-friendly patter
-        pattern = rf"{escaped_test}\\s*[:=]?\\s*(\d{{1,3}})"  # Allow ':' or '=' or whitespace before number
+    for test in QUESTIONNAIRES_KEYWORDS:
+        escaped_test = re.escape(test).replace(r"\ ", r"\s+")  # Convert test name to regex-friendly pattern
+        pattern = rf"{escaped_test}\s*[:=]?\s*(\d{{1,3}})"  # Allow ':' or '=' or whitespace before number
         match = re.search(pattern, user_input)
         if match:
             try:
                 score = int(match.group(1))
                 results[test] = score
-                normalized = QUESTIONNAIRE_ALIASES.get(test, test)
+                normalized = ALIASES.get(test, test)
                 questionnaires.add(normalized)
             except ValueError:
                 continue
 
     return list(questionnaires), results
 
-def score_to_disorders(score_dict, filepath=MAPPING_PATH):
+def score_to_disorders(score_dict: dict) -> list:
     """
     Evaluate questionnaire scores using a YAML-defined mapping schema.
+
     For each item, checks thresholds and returns associated ICD-11 disorders.
 
     Args:
         score_dict (dict): Questionnaire-to-score dictionary.
-        filepath (str): Path to the YAML mapping file.
 
     Returns:
         list: All matching disorder labels without duplicates.
     """
     # Load YAML mapping at the start
-    with open(filepath, "r") as f:
+    with open(MAPPING_PATH, "r") as f:
         mapping = yaml.safe_load(f)
 
     all_disorders = []

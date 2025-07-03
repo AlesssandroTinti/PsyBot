@@ -1,11 +1,11 @@
-import os                                               # For interacting with the filesystem
+import os                                               # For environment variables and system operations
 import yaml                                             # For parsing YAML files
 import glob                                             # For recursive file pattern matching
 import json                                             # For saving and loading metadata
 import torch                                            # For checking CUDA availability
-import logging                                          # For logging events
+import logging                                          # For logging events and debug/error messages
 import numpy as np                                      # For numerical operations on embeddings
-from typing import List, Dict                           # Type hints for better readability and tools
+from typing import Any, TypedDict                       # For defining structured dictionaries with type hints
 from sentence_transformers import SentenceTransformer   # Model for encoding text
 from sklearn.metrics.pairwise import cosine_similarity  # To compute vector similarities
 from config import INDEX_PATH, CHUNKS_PATH, TOP_K       # Predefined constants
@@ -14,8 +14,25 @@ from config import INDEX_PATH, CHUNKS_PATH, TOP_K       # Predefined constants
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("RAG")
 
+# Type Definitions 
+class ChunkEntry(TypedDict):
+    text: str
+    source: str
 
-def format_value(key, value, indent: int = 0) -> str:
+class QueryResult(TypedDict):
+    score: float
+    text: str
+    source: str
+
+class QuestionnaireEntry(TypedDict, total=False):
+    questionnaire: str
+    description: str
+    measures: dict
+    score_range: dict
+    reference_values: dict
+    path: str
+
+def format_value(value: Any, indent: int = 0) -> str:
     """
     Recursively formats nested YAML data into markdown-style strings suitable for LLM input.
 
@@ -36,7 +53,7 @@ def format_value(key, value, indent: int = 0) -> str:
                 lines.append(f"{spacer}- **{subkey}**: {subval['minimum']}-{subval['maximum']}")
             elif isinstance(subval, dict):
                 # Recursive formatting for nested dictionaries
-                lines.append(f"{spacer}- **{subkey}**:\n{format_value(subkey, subval, indent + 1)}")
+                lines.append(f"{spacer}- **{subkey}**:\n{format_value(subval, indent + 1)}")
             else:
                 # Key-value format for primitive types
                 lines.append(f"{spacer}- **{subkey}**: {subval}")
@@ -47,21 +64,20 @@ def format_value(key, value, indent: int = 0) -> str:
     # Base case: return string representation
     return spacer + str(value)
 
-
 class YAMLRAGLoader:
     """
     Loads YAML documents and formats them into text chunks for embedding and retrieval.
     """
 
-    def __init__(self, docs_path: str):
+    def __init__(self, docs_path: str) -> None:
         """
         Initializes the loader with a path to YAML files.
 
         Args:
             docs_path (str): Directory containing YAML documents.
         """
-        self.docs_path = docs_path  # Directory where YAMLs reside
-        self.entries: List[Dict] = []  # Container for parsed questionnaire data
+        self.docs_path = docs_path     # Directory where YAMLs reside
+        self.entries: list[dict] = []  # Container for parsed questionnaire data
 
     def load_documents(self) -> None:
         """
@@ -93,12 +109,12 @@ class YAMLRAGLoader:
                 }
                 self.entries.append(doc)
 
-    def get_text_chunks(self) -> List[Dict[str, str]]:
+    def get_text_chunks(self) -> list[ChunkEntry]:
         """
         Converts loaded YAML entries into structured markdown-formatted strings.
 
         Returns:
-            List[Dict[str, str]]: List of formatted text blocks and metadata.
+            List[Dict[str,str]]: List of formatted text blocks and metadata.
         """
         chunks = []
         for entry in self.entries:
@@ -107,7 +123,7 @@ class YAMLRAGLoader:
             # Iterate over known metadata sections
             for key in ['description', 'measures', 'score_range', 'reference_values']:
                 if entry.get(key):
-                    text += f"\n\n**{key.replace('_', ' ').title()}:**\n{format_value(key, entry[key])}"
+                    text += f"\n\n**{key.replace('_', ' ').title()}:**\n{format_value(entry[key])}"
 
             # Append the result as a chunk
             chunks.append({
@@ -117,13 +133,12 @@ class YAMLRAGLoader:
 
         return chunks
 
-
 class SimpleRAG:
     """
     A minimal Retrieval-Augmented Generation engine using sentence embeddings and cosine similarity.
     """
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str) -> None:
         """
         Initializes the SentenceTransformer and preallocates space for corpus structures.
 
@@ -132,12 +147,13 @@ class SimpleRAG:
         """
         logger.info("Loading embedding model...")
         device = "cuda" if torch.cuda.is_available() else "cpu"      # Check GPU availability
+        logger.info(f"Using device: {'CUDA' if torch.cuda.is_available() else 'CPU'}")
         self.model = SentenceTransformer(model_name, device=device)  # Load model on appropriate device
         self.corpus_embeddings = None                                # Embedding matrix
-        self.corpus_chunks: List[Dict[str, str]] = []                # Text and metadata
-        self.questionnaires: List = []                               # Index + questionnaire label pairs
+        self.corpus_chunks: list[ChunkEntry] = []                    # Text and metadata
+        self.questionnaires: list = []                               # Index + questionnaire label pairs
 
-    def build_index(self, chunks: List[Dict[str, str]], entries: List[Dict[str, str]]) -> None:
+    def build_index(self, chunks: list[ChunkEntry], entries: list[QuestionnaireEntry]) -> None:
         """
         Builds the document embedding index from preprocessed text chunks.
 
@@ -161,44 +177,37 @@ class SimpleRAG:
             if "questionnaire" in entry:
                 self.questionnaires.append((i, entry["questionnaire"]))
 
-    def save_index(self, path: str = INDEX_PATH) -> None:
+    def save_index(self) -> None:
         """
         Saves embeddings and metadata to disk.
-
-        Args:
-            path (str): Output path for embeddings.
         """
-        np.savez(path, embeddings=self.corpus_embeddings)  # Save vector matrix
+        np.savez(INDEX_PATH, embeddings=self.corpus_embeddings)  # Save vector matrix
         with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
             json.dump({
                 "chunks": self.corpus_chunks,
                 "questionnaires": self.questionnaires
             }, f, ensure_ascii=False, indent=2)  # Save metadata
 
-    def load_index(self, path: str = INDEX_PATH) -> None:
+    def load_index(self) -> None:
         """
         Loads precomputed embeddings and metadata from disk.
-
-        Args:
-            path (str): Path to saved index file.
         """
-        data = np.load(path)  # Load vector matrix
+        data = np.load(INDEX_PATH)  # Load vector matrix
         self.corpus_embeddings = data["embeddings"]
         with open(CHUNKS_PATH, "r", encoding="utf-8") as f:
             saved = json.load(f)  # Load chunk metadata
             self.corpus_chunks = saved.get("chunks", [])
             self.questionnaires = saved.get("questionnaires", [])
 
-    def query(self, question: str, top_k: int = TOP_K) -> List[Dict[str, str]]:
+    def query(self, question: str) -> list[QueryResult]:
         """
         Retrieves the most relevant documents for a given question.
 
         Args:
             question (str): The user's input query.
-            top_k (int): Number of top results to return.
 
         Returns:
-            List[Dict[str, str]]: Ranked documents with semantic similarity scores.
+            List[Dict[str,str]]: Ranked documents with semantic similarity scores.
         """
         logger.info("Encoding query...")  # Track progress
 
@@ -214,7 +223,7 @@ class SimpleRAG:
         similarities = cosine_similarity([query_embedding], self.corpus_embeddings)[0]
 
         # Rank documents by semantic similarity
-        top_indices = np.argsort(similarities)[::-1][:top_k]
+        top_indices = np.argsort(similarities)[::-1][:TOP_K]
 
         # List of dicts containing 'score', 'text', and 'source'.
         return [

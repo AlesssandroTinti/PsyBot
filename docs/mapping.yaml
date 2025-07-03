@@ -44,7 +44,6 @@ BAS Fun Seeking:
   threshold: 11
   direction: "gt"
   disorders:
-    - Impulsivity-related disorders
     - Bipolar or related disorders
     - Bipolar II disorder
 
