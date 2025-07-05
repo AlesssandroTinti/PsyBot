@@ -169,15 +169,30 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
     stream = llm(
         prompt,
         max_tokens=available,
-        stop=["</s>", "Domanda:", "\n\n"],  # Multiple stop patterns
+        stop=["</s>", "Domanda:", "\n\n", "# # #", ". . .", "~ ~ ~", "- - -", "Answer:"],  # Multiple stop patterns
         temperature=TEMPERATURE,
         stream=True
     )
 
+    repetition_guard = 0
+    last_fragment = ""
     output = ""  # Accumulate streaming output
     for chunk in stream:
         tok = chunk.get("choices", [{}])[0].get("text", "")
         output += tok
+
+         # Check for repetitive loops
+        if tok == last_fragment:
+            repetition_guard += 1
+        else:
+            repetition_guard = 0
+
+        last_fragment = tok
+        # Break if same fragment repeated too many times
+        if repetition_guard >= 3:
+            logger.info("Repetition detected — early stop triggered.")
+            break
+
         yield output  # Yield partial answer as it's generated
 
     log_to_csv(user_input, rag_results, output)  # Log interaction

@@ -3,12 +3,12 @@
 ![LLM](https://img.shields.io/badge/Model-LLaMA3_8B_Q5_K_M-purple)
 
 # **PsyBot – Local LLM Clinical Assistant**
-PsyBot is a local AI assistant designed for interpreting psychometric questionnaires, retrieving ICD-11 diagnostic descriptions, and providing structured clinical insights — all without calling external LLM APIs. 
-This project was developed as part of a research internship inspired by the MMASH dataset, which explores physiological and psychological signals (including wearable devices) to support the analysis of mental disorders. 
-PsyBot integrates some of the same psychometric tools used in MMASH and extends them into a structured clinical chatbot capable of providing:
-- Definitions of disorders and psychometric tests
-- Comparisons between disorders
-- Diagnostic suggestions based on user-submitted questionnaire scores
+PsyBot is a local AI assistant designed for interpreting psychometric questionnaires, retrieving ICD-11 diagnostic descriptions, and providing structured clinical insights — all without relying on external LLM inference APIs. The core language model runs entirely on-device.
+This project was developed as part of a research internship inspired by the MMASH dataset, which explores physiological and psychological signals (including data from wearable devices) to support the analysis of mental disorders. PsyBot integrates psychometric tools similar to those used in MMASH and extends them into a structured clinical chatbot capable of:
+- Providing definitions of psychological disorders and psychometric assessments
+- Comparing diagnostic categories and clinical criteria
+- Offering diagnostic suggestions based on user-submitted questionnaire scores
+- Interpreting symptom descriptions or transcripts from psychological sessions
 
 ## **Main Features**
 - Local LLM (`Meta-Llama-3-8B-Instruct.Q5_K_M.gguf` via [llama-cpp-python](https://github.com/abetlen/llama-cpp-python))
@@ -81,7 +81,7 @@ DIAGNOSIS:
 a patient obtained these scores: MEQ: 50, PSQI: 13, PANAS PA: 22, PANAS NA: 38, BIS/BAS: BIS: 28, BAS Drive: 14, BAS  Fun Seeking: 12, BAS Reward Resp.: 13, STAI-Y: 72. Which kind of disorder could it be?
 
 CLINICAL:
-Which kind of disorders can we hypothesize for this patient: MEQ: 50, PSQI: 13, PANAS PA: 22, PANAS NA: 38, BIS/BAS: BIS: 28, BAS Drive: 14, BAS  Fun Seeking: 12, BAS Reward Resp.: 13, STAI-Y: 72?
+List the 3 suggested disorders for this patient: MEQ: 50, PSQI: 13, PANAS PA: 22, PANAS NA: 38, BIS/BAS: BIS: 28, BAS Drive: 14, BAS Fun Seeking: 12, BAS Reward Resp.: 13, STAI-Y: 72
 
 INTERPRETATION:
 A patient has a significantly low body weight, with extreme fear of gain weight. How can we interpret these symptoms?

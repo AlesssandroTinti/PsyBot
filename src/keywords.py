@@ -47,14 +47,14 @@ INTERPRETATION_KEYWORDS = {
 
 # Keywords signaling clinical/score-related queries
 CLINICAL_KEYWORDS = {
-    "three", "3", "suppose", "suppose", "suggest", "suggested", "propose", "proposed",
+    "three", "suppose", "suppose", "suggest", "suggested", "propose", "proposed",
     "recommend", "recommended", "hypothesize", "hypothesized"
 }
 
 # Canonical prompts names mapped to their keywords
 KEYWORD_GROUPS = {
-    "interpretation": INTERPRETATION_KEYWORDS,  
-    "comparison": COMPARISON_KEYWORDS,          
-    "diagnosis": DIAGNOSIS_KEYWORDS,            
-    "clinical": CLINICAL_KEYWORDS               
+    "interpretation": INTERPRETATION_KEYWORDS,
+    "clinical": CLINICAL_KEYWORDS,
+    "diagnosis": DIAGNOSIS_KEYWORDS,    
+    "comparison": COMPARISON_KEYWORDS
 }
