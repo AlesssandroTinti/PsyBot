@@ -9,6 +9,10 @@ Only include the top 3 disorders that are explicitly referenced in the documents
 Each bullet point must follow this exact format:
 
 • [**Disorder Name**] (**ICD-11: [Code]**): [Explanation of scores and thresolds that triggered the suspected disorder]
+    - [**Definition**]
+    - [**Core Symptoms**]
+    - [**Diagnostic Criteria**]
+    - [**Typical patient Presentation**]
 
 Use a bullet point for every single disorder mentioned below:
 {user_input}

@@ -79,6 +79,12 @@ can you compare Social Anxiety Disorder, Generalized Anxiety Disorder and Separa
 
 DIAGNOSIS:
 a patient obtained these scores: MEQ: 50, PSQI: 13, PANAS PA: 22, PANAS NA: 38, BIS/BAS: BIS: 28, BAS Drive: 14, BAS  Fun Seeking: 12, BAS Reward Resp.: 13, STAI-Y: 72. Which kind of disorder could it be?
+
+CLINICAL:
+Which kind of disorders can we hypothesize for this patient: MEQ: 50, PSQI: 13, PANAS PA: 22, PANAS NA: 38, BIS/BAS: BIS: 28, BAS Drive: 14, BAS  Fun Seeking: 12, BAS Reward Resp.: 13, STAI-Y: 72?
+
+INTERPRETATION:
+A patient has a significantly low body weight, with extreme fear of gain weight. How can we interpret these symptoms?
 ```
 
 ## **Notes**

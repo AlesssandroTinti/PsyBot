@@ -91,6 +91,7 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
     context_chunks, rag_results = [], []  # Lists for aggregated context
     context = ""  # Full assembled context text
 
+    # Branch for diagnosis or clinical questions
     if question_type == "diagnosis" or question_type == "clinical":
         questionnaires, scores = extract_scores(user_input)  # Parse provided questionnaire found and scores
         disorders = score_to_disorders(scores)  # Map scores to possible disorders
@@ -126,8 +127,13 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
 
         context = "\n\n".join(context_chunks)
 
+    # Branch for interpretation requests, answered by the LLM without RAG
+    elif question_type == "interpretation":
+        # No context is fetched; context and rag_results remain empty
+        context = user_input  # The model will answer based on its pre-trained knowledge
+        rag_results = "RAG Disabled"  # For log view
+
     else:
-        # Fallback for other question types (e.g., definitions/diagnoses/interpretations)
         terms = detect_disorders(user_input)
         logger.info(f"Extracted disorder terms: {terms}")
         

@@ -53,8 +53,8 @@ CLINICAL_KEYWORDS = {
 
 # Canonical prompts names mapped to their keywords
 KEYWORD_GROUPS = {
-    "comparison": COMPARISON_KEYWORDS,          
     "interpretation": INTERPRETATION_KEYWORDS,  
+    "comparison": COMPARISON_KEYWORDS,          
     "diagnosis": DIAGNOSIS_KEYWORDS,            
     "clinical": CLINICAL_KEYWORDS               
 }

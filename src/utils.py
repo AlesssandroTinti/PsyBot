@@ -78,23 +78,28 @@ def log_to_csv(question: str, rag_sources: list, mistral_response: str) -> None:
         rag_sources (list): Documents retrieved and used for RAG.
         mistral_response (str): The model's textual output.
     """
-    source_set = set()  # Build a set to collect unique, cleaned source references 
-    for r in rag_sources:
-        raw_text = r.get("text", "")
-        # If it's an ICD chunk, clean the first line
-        if "\n" in raw_text:
-            line = raw_text.split("\n")[0].strip()
-            line = re.sub(r"^###\s*", "", line)
-            line = re.sub(r"\s*\(ICD-11 Code:\s*", " (", line)
-            source = line
-        # Otherwise, treat it as a YAML filename or flat source string
-        else:
-            source = os.path.basename(r.get("source", ""))
-        source_set.add(source)
+    # Branch for interpretation requests
+    if rag_sources == "RAG Disabled":
+        rag_files = "RAG Disabled"
+    # Branch for RAG requests
+    else:
+        source_set = set()  # Build a set to collect unique, cleaned source references 
+        for r in rag_sources:
+            raw_text = r.get("text", "")
+            # If it's an ICD chunk, clean the first line
+            if "\n" in raw_text:
+                line = raw_text.split("\n")[0].strip()
+                line = re.sub(r"^###\s*", "", line)
+                line = re.sub(r"\s*\(ICD-11 Code:\s*", " (", line)
+                source = line
+            # Otherwise, treat it as a YAML filename or flat source string
+            else:
+                source = os.path.basename(r.get("source", ""))
+            source_set.add(source)
 
-    # Sort and join the unique sources
-    normalized_sources = sorted(source_set)
-    rag_files = ", ".join(normalized_sources)
+        # Sort and join the unique sources
+        normalized_sources = sorted(source_set)
+        rag_files = ", ".join(normalized_sources)
 
     # Clean input and output text for CSV formatting
     q_text = question.replace('\n', ' ').replace('"', "'")
