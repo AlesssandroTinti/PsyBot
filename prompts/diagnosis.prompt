@@ -14,6 +14,9 @@ Use a bullet point for every single disorder mentioned below:
 {user_input}
 
 Documents:
-{context}
+{icd_context}
+
+Psychometric Context:
+{rag_context}
 
 Answer:

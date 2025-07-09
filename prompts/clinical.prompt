@@ -11,9 +11,12 @@ Each bullet point must follow this exact format:
 • [**Disorder Name**] (**ICD-11: [Code]**): [**Definition**] [**Core Symptoms**] [**Diagnostic Criteria**] [**Typical patient Presentation**]
 
 Use a bullet point for every single disorder mentioned below:
-{user_input}
+{icd_context}
 
-Documents:
-{context}
+Psychometric Context:
+{rag_context}
+
+User input:
+{user_input}
 
 Answer:

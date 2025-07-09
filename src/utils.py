@@ -1,8 +1,9 @@
-import os                     # For environment variables and system operations
-import re                     # For regular expressions and pattern matching
-import yaml                   # For parsing YAML files
-import spacy                  # For NLP entity recognition 
-from typing import TypedDict  # For defining structured dictionaries with type hints
+import os                        # For environment variables and system operations
+import re                        # For regular expressions and pattern matching
+import yaml                      # For parsing YAML files
+import spacy                     # For NLP entity recognition 
+from typing import TypedDict     # For defining structured dictionaries with type hints
+from collections import Counter  # For count occurrences 
 from config import PROMPT_PATH, CSV_LOG_PATH, MAPPING_PATH
 from keywords import (ALIASES, DISEASE_KEYWORDS, QUESTIONNAIRES_KEYWORDS, KEYWORD_GROUPS)
 
@@ -189,24 +190,26 @@ def extract_scores(user_input: str) -> tuple[list[str], QuestionnaireScores]:
 
     return list(questionnaires), results
 
-def score_to_disorders(score_dict: dict) -> list:
+def score_to_disorders(score_dict: dict, question_type: str) -> list[str]:
     """
     Evaluate questionnaire scores using a YAML-defined mapping schema.
 
-    For each item, checks thresholds and returns associated ICD-11 disorders.
+    If question_type is "clinical", return the top disorders based on frequency,
+    including ties at the cutoff. Otherwise, return all in descending frequency.
 
     Args:
         score_dict (dict): Questionnaire-to-score dictionary.
+        question_type (str): Type of the user question (e.g., "clinical").
 
     Returns:
-        list: All matching disorder labels without duplicates.
+        list[str]: Sorted disorder labels by frequency.
     """
-    # Load YAML mapping at the start
     with open(MAPPING_PATH, "r") as f:
         mapping = yaml.safe_load(f)
 
-    all_disorders = []
-    for test, val in score_dict.items():
+    counter = Counter()
+
+    for test, score in score_dict.items():
         config = mapping.get(test)
         if not config:
             continue
@@ -215,23 +218,35 @@ def score_to_disorders(score_dict: dict) -> list:
         threshold = config.get("threshold")
         thresholds = config.get("thresholds")
 
-        # Evaluate score according to direction logic
-        if direction == "gte" and val >= threshold:
-            all_disorders.extend(config["disorders"])
-        elif direction == "gt" and val > threshold:
-            all_disorders.extend(config["disorders"])
-        elif direction == "lt" and val < threshold:
-            all_disorders.extend(config["disorders"])
+        triggered = False
+        if direction == "gte" and score >= threshold:
+            triggered = True
+        elif direction == "gt" and score > threshold:
+            triggered = True
+        elif direction == "lt" and score < threshold:
+            triggered = True
         elif direction == "outside" and thresholds:
             low, high = thresholds
-            if val <= low or val >= high:
-                all_disorders.extend(config["disorders"])
+            if score <= low or score >= high:
+                triggered = True
 
-    seen = set()
-    unique_disorders = []
-    for d in all_disorders:
-        if d not in seen:
-            seen.add(d)
-            unique_disorders.append(d)
-        
-    return unique_disorders
+        if triggered:
+            counter.update(config.get("disorders", []))
+
+    # Sort by frequency DESC, then alphabetically
+    sorted_items = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+
+    if question_type == "clinical":
+        if not sorted_items:
+            return []
+
+        # Get count of the third most frequent disorder (or fewer if not enough)
+        top3 = sorted_items[:3]
+        min_count = top3[-1][1]
+
+        # Include all with count >= min_count
+        result = [d for d, count in sorted_items if count >= min_count]
+        return result
+
+    else:
+        return [d for d, _ in sorted_items]

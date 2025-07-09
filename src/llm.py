@@ -88,49 +88,49 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
     question_type = detect_question_type(user_input)  # Detect intent
     logger.info(f"User intent detected: {question_type.upper()}")  # Log intent
 
-    context_chunks, rag_results = [], []  # Lists for aggregated context
+    rag_context = ""
+    icd_context = ""
+    rag_results = []  # Lists for aggregated context
     context = ""  # Full assembled context text
 
     # Branch for diagnosis or clinical questions
-    if question_type == "diagnosis" or question_type == "clinical":
-        questionnaires, scores = extract_scores(user_input)  # Parse provided questionnaire found and scores
-        disorders = score_to_disorders(scores)  # Map scores to possible disorders
+    if question_type in ("diagnosis", "clinical"):
+        questionnaires, scores = extract_scores(user_input)    # Parse provided questionnaire found and scores
+        disorders = score_to_disorders(scores, question_type)  # Map scores to possible disorders
         logger.info(f"Used questionnaires: {questionnaires}")
         logger.info(f"Suspected disorders: {disorders}")
 
+        rag_chunks = []
+
+        if question_type == "diagnosis":
         # Add questionnaire-specific YAML context
-        for q in questionnaires:
-            match = next(
-                ((i, name) for i, name in rag_engine.questionnaires
-                 if q.lower() in name.lower()),
-                None
-            )
+            for q in questionnaires:
+                match = next(((i, name) for i, name in rag_engine.questionnaires if q.lower() in name.lower()), None)
 
-            if match:
-                idx, _ = match
-                src = os.path.basename(rag_engine.corpus_chunks[idx]["source"])
-                context_chunks.append(rag_engine.corpus_chunks[idx]["text"])
-                
-                rag_results.append({
-                    "score": 1.0,
-                    "text": rag_engine.corpus_chunks[idx]["text"],
-                    "source": src
-                })
+                if match:
+                    idx, _ = match
+                    text = rag_engine.corpus_chunks[idx]["text"]
+                    src = os.path.basename(rag_engine.corpus_chunks[idx]["source"])
+                    rag_chunks.append(text)
+                    rag_results.append({
+                        "score": 1.0,
+                        "text": text,
+                        "source": src
+                    })
+                else:
+                    logger.info(f"No chunk matched questionnaire '{q}'")
 
-            else:
-                logger.info(f"No chunk matched questionnaire '{q}'")
+        rag_context = "\n\n".join(rag_chunks)
 
         # Add ICD context based on suspected disorders
         icd_chunks, icd_rags = add_icd_results_to_context(disorders)
-        context_chunks += icd_chunks
+        icd_context = "\n\n".join(icd_chunks)
         rag_results += icd_rags
-
-        context = "\n\n".join(context_chunks)
 
     # Branch for interpretation requests, answered by the LLM without RAG
     elif question_type == "interpretation":
         # No context is fetched; context and rag_results remain empty
-        context = user_input  # The model will answer based on its pre-trained knowledge
+        rag_context = user_input  # The model will answer based on its pre-trained knowledge
         rag_results = "RAG Disabled"  # For log view
 
     else:
@@ -138,28 +138,29 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
         logger.info(f"Extracted disorder terms: {terms}")
         
         icd_chunks, icd_rags = add_icd_results_to_context(terms)
-        context_chunks = icd_chunks
+        icd_context = "\n\n".join(icd_chunks)
         rag_results = icd_rags
 
-        context = "\n\n".join(context_chunks)
-
         # If no ICD info found, fallback to YAML-based RAG
-        if not context_chunks:
+        if not icd_chunks:
             logger.info("No ICD context found — using fallback RAG YAML search")
             rag_results = rag_engine.query(user_input, top_k=TOP_K)
             combined = "\n\n".join(r["text"] for r in rag_results)
             tokens = llm.tokenize(combined.encode("utf-8"))
             max_ct = N_CTX - MAX_TOKENS - 128
-
-            if len(tokens) > max_ct:
-                tokens = tokens[:max_ct]
-                context = llm.detokenize(tokens).decode("utf-8") + "\n[...]"
-            else:
-                context = combined
+            context = llm.detokenize(tokens[:max_ct]).decode("utf-8") + "\n[...]"
+            rag_context = context
 
     # Load prompt template 
     prompt_tmpl = load_prompt_template(question_type)
-    prompt = prompt_tmpl.format(context=context, user_input=user_input)
+    if question_type in ("diagnosis", "clinical"):
+        prompt = prompt_tmpl.format(
+            rag_context=rag_context,
+            icd_context=icd_context,
+            user_input=user_input
+        )
+    else:
+        prompt = prompt_tmpl.format(context=rag_context, user_input=user_input)
     
     # Calculate available tokens
     tok_prompt = llm.tokenize(prompt.encode("utf-8"))
@@ -169,28 +170,37 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
     stream = llm(
         prompt,
         max_tokens=available,
-        stop=["</s>", "Domanda:", "\n\n", "# # #", ". . .", "~ ~ ~", "- - -", "Answer:"],  # Multiple stop patterns
+        stop=["</s>", "\n\n", "Answer:", "Explanation:", "Diagnosis:", "# # #", "...", "~ ~ ~", "- - -"],
         temperature=TEMPERATURE,
         stream=True
     )
 
+    output = ""  # Accumulate streaming output
+    bullet_count = 0
     repetition_guard = 0
     last_fragment = ""
-    output = ""  # Accumulate streaming output
+
     for chunk in stream:
         tok = chunk.get("choices", [{}])[0].get("text", "")
         output += tok
 
-         # Check for repetitive loops
+        # Count bullets globally
+        if question_type in ("diagnosis", "clinical"):
+            bullet_count += tok.count("•")
+            max_bullets = len(disorders) if question_type == "diagnosis" else 3
+            if bullet_count > max_bullets:
+                logger.info("Max bullet count reached — early stop.")
+                break
+
+        # Repetition detection
         if tok == last_fragment:
             repetition_guard += 1
         else:
             repetition_guard = 0
-
         last_fragment = tok
-        # Break if same fragment repeated too many times
+
         if repetition_guard >= 3:
-            logger.info("Repetition detected — early stop triggered.")
+            logger.info("Repetition detected — early stop.")
             break
 
         yield output  # Yield partial answer as it's generated

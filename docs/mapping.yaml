@@ -1,58 +1,156 @@
-STAI-Y:
-  threshold: 65
-  direction: "gte"
-  disorders:
-    - Generalized anxiety disorder
-    - Panic disorder
-    - Social anxiety disorder
-    - Specific phobia
-
-PSQI:
-  threshold: 10
-  direction: "gte"
-  disorders:
-    - Single episode depressive disorder, unspecified severity
-
-MEQ:
-  thresholds: [41, 59]
-  direction: "outside"
-  disorders:
-
-BIS:
-  threshold: 25
-  direction: "gt"
-  disorders:
-    - Bipolar I disorder
-    - Bipolar II disorder
-    - Cyclothymic disorder
-
-BAS Drive:
-  threshold: 12
-  direction: "gt"
-  disorders:
-    - Bipolar I disorder
-    - Cyclothymic disorder
-
-BAS Fun Seeking:
-  threshold: 11
-  direction: "gt"
-  disorders:
-    - Bipolar II disorder
-
-BAS Reward Resp.:
-  threshold: 12
-  direction: "gt"
-  disorders:
-    - Bipolar I disorder
-
-PANAS PA:
-  threshold: 25
-  direction: "lt"
-  disorders:
-    - Generalized anxiety disorder
-
-PANAS NA:
-  threshold: 35
-  direction: "gt"
-  disorders:
-    - Generalized anxiety disorder
+{
+  "STAI-Y": {
+    "thresholds": [
+      {
+        "value": 54,
+        "direction": "gte",
+        "disorders": [
+          "Generalized anxiety disorder"
+        ]
+      },
+      {
+        "value": 57,
+        "direction": "gte",
+        "disorders": [
+          "Generalized anxiety disorder"
+        ]
+      },
+      {
+        "value": 65,
+        "direction": "gte",
+        "disorders": [
+          "Generalized anxiety disorder",
+          "Social anxiety disorder",
+          "Panic disorder",
+          "Agoraphobia",
+          "Specific phobia",
+          "Illness anxiety disorder",
+          "Obsessive-compulsive disorder",
+          "Post-traumatic stress disorder",
+          "Complex post-traumatic stress disorder",
+          "Anorexia Nervosa, unspecified",
+          "Bulimia nervosa",
+          "Borderline personality disorder",
+          "Avoidant personality disorder",
+          "Autism spectrum disorder"
+        ]
+      }
+    ]
+  },
+  "PSQI": {
+    "threshold": 10,
+    "direction": "gte",
+    "disorders": [
+      "Single episode depressive disorder",
+      "Recurrent depressive disorder",
+      "Bipolar I disorder",
+      "Bipolar II disorder",
+      "Generalized anxiety disorder",
+      "Post-traumatic stress disorder",
+      "Complex post-traumatic stress disorder",
+      "Obsessive-compulsive disorder",
+      "Anorexia Nervosa, unspecified",
+      "Bulimia nervosa",
+      "Binge-eating disorder",
+      "Borderline personality disorder",
+      "Autism spectrum disorder",
+      "Attention deficit hyperactivity disorder",
+      "Disorders due to substance use"
+    ]
+  },
+  "MEQ": {
+    "thresholds": [
+      {
+        "value": 41,
+        "direction": "lte"
+      },
+      {
+        "value": 59,
+        "direction": "gte"
+      }
+    ],
+    "disorders": [
+      "Depressive disorders",
+      "Bipolar disorders",
+      "Sleep-wake disorders",
+      "Disorders due to substance use",
+      "Anorexia Nervosa, unspecified",
+      "Bulimia nervosa",
+      "Binge-eating disorder"
+    ]
+  },
+  "BIS": {
+    "threshold": 26,
+    "direction": "gt",
+    "disorders": [
+      "Bipolar I disorder",
+      "Bipolar II disorder",
+      "Cyclothymic disorder",
+      "Attention deficit hyperactivity disorder",
+      "Obsessive-compulsive disorder",
+      "Borderline personality disorder"
+    ]
+  },
+  "BAS Drive": {
+    "threshold": 13,
+    "direction": "gt",
+    "disorders": [
+      "Bipolar I disorder",
+      "Cyclothymic disorder",
+      "Gambling disorder"
+    ]
+  },
+  "BAS Fun Seeking": {
+    "threshold": 12,
+    "direction": "gt",
+    "disorders": [
+      "Bipolar I disorder",
+      "Bipolar II disorder",
+      "Attention deficit hyperactivity disorder",
+      "Bulimia nervosa",
+      "Binge-eating disorder",
+      "Disorders due to substance use",
+      "Gambling disorder"
+    ]
+  },
+  "BAS Reward Resp.": {
+    "threshold": 13,
+    "direction": "gt",
+    "disorders": [
+      "Bipolar I disorder",
+      "Disorders due to substance use"
+    ]
+  },
+  "PANAS PA": {
+    "threshold": 22,
+    "direction": "lt",
+    "disorders": [
+      "Single episode depressive disorder",
+      "Recurrent depressive disorder",
+      "Persistent depressive disorder",
+      "Schizophrenia",
+      "Autism spectrum disorder"
+    ]
+  },
+  "PANAS NA": {
+    "threshold": 38,
+    "direction": "gt",
+    "disorders": [
+      "Generalized anxiety disorder",
+      "Panic disorder",
+      "Social anxiety disorder",
+      "Depressive disorders",
+      "Post-traumatic stress disorder",
+      "Complex post-traumatic stress disorder",
+      "Adjustment disorder",
+      "Obsessive-compulsive disorder",
+      "Body dysmorphic disorder",
+      "Borderline personality disorder",
+      "Anorexia Nervosa, unspecified",
+      "Bulimia nervosa",
+      "Binge-eating disorder",
+      "Autism spectrum disorder",
+      "Attention deficit hyperactivity disorder"
+    ]
+  }
+}

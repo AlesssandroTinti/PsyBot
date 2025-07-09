@@ -72,7 +72,7 @@ PsyBot/
 ## **Example Input**
 ```yaml
 DEFINITION:
-what can you tell me about Anorexia Nervosa?
+what can you tell me about Bulimia Nervosa?
 
 COMPARISON:
 can you compare Social Anxiety Disorder, Generalized Anxiety Disorder and Separation Anxiety Disorder?

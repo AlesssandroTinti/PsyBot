@@ -1,27 +1,39 @@
 import os
+import torch
+import multiprocessing
 from dotenv import load_dotenv
 
-# Embedding & RAG settings
+# -----------------------------
+# System-aware config logic
+# -----------------------------
+GPU_AVAILABLE = torch.cuda.is_available()  # Detect GPU support
+N_CTX = 8192                               # Max context window (number of tokens)
+N_BATCH = 512                              # Batch size for token generation
+N_THREADS = multiprocessing.cpu_count()    # Detect number of CPU threads
+GPU_LAYERS = 35 if GPU_AVAILABLE else 0    # Number of GPU layers
+MAX_TOKENS = 1024                          # Max length of the generated output (prevents excessive verbosity)
+
+# -----------------------------
+# Model-specific settings
+# -----------------------------
 LLAMA_3 = "Meta-Llama-3-8B-Instruct.Q5_K_M.gguf"                                # Local large language model (quantized, 5-bit)
 EMBEDDING_MODEL = "pritamdeka/PubMedBERT-mnli-snli-scinli-scitail-mednli-stsb"  # Sentence embedding model for RAG retrieval
 TOP_K = 1                                                                       # Number of top documents to retrieve
 TEMPERATURE = 0.5                                                               # LLM creativity level ("empathy" for clinical tone)
 SIMILARITY = 0.80                                                               # Minimum similarity threshold for RAG results
 
-# LLM runtime settings
-N_CTX = 8192       # Max context window (number of tokens)
-N_BATCH = 512      # Batch size for token generation
-N_THREADS = 8      # Number of CPU threads (e.g., i7 quad-core with hyperthreading)
-MAX_TOKENS = 1024  # Max length of the generated output (prevents excessive verbosity)
-
+# -----------------------------
 # ICD-11 API (loaded from environment variables)
+# -----------------------------
 load_dotenv()  # Load from .env file
 ICD_CLIENT_ID = os.getenv("ICD_CLIENT_ID")
 ICD_CLIENT_SECRET = os.getenv("ICD_CLIENT_SECRET")
 AUTH_URL = os.getenv("AUTH_URL")
 SEARCH_URL = os.getenv("SEARCH_URL")
 
+# -----------------------------
 # Absolute paths
+# -----------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Root directory of the application
 DOCS_PATH = os.path.join(BASE_DIR, "docs")                              # Directory containing medical or RAG documents
 SRC_PATH = os.path.join(BASE_DIR, "src")                                # Directory for Python source files
