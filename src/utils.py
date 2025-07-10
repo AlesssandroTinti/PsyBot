@@ -4,8 +4,8 @@ import yaml                      # For parsing YAML files
 import spacy                     # For NLP entity recognition 
 from typing import TypedDict     # For defining structured dictionaries with type hints
 from collections import Counter  # For count occurrences 
-from config import PROMPT_PATH, CSV_LOG_PATH, MAPPING_PATH
-from keywords import (ALIASES, DISEASE_KEYWORDS, QUESTIONNAIRES_KEYWORDS, KEYWORD_GROUPS)
+from config import PROMPT_PATH, CSV_LOG_PATH, MAPPING_PATH, TOP_K
+from keywords import ALIASES, DISEASE_KEYWORDS, QUESTIONNAIRES_KEYWORDS, KEYWORD_GROUPS
 
 # Type Definitions 
 class QuestionnaireScores(TypedDict, total=False):
@@ -249,4 +249,5 @@ def score_to_disorders(score_dict: dict, question_type: str) -> list[str]:
         return result
 
     else:
-        return [d for d, _ in sorted_items]
+        top10 = sorted_items[:TOP_K]
+        return [d for d, _ in top10]

@@ -25,14 +25,14 @@
           "Agoraphobia",
           "Specific phobia",
           "Illness anxiety disorder",
-          "Obsessive-compulsive disorder",
+          "Obsessive-compulsive disorder, unspecified",
           "Post-traumatic stress disorder",
           "Complex post-traumatic stress disorder",
           "Anorexia Nervosa, unspecified",
           "Bulimia nervosa",
-          "Borderline personality disorder",
+          "Personality disorder, severity unspecified",
           "Avoidant personality disorder",
-          "Autism spectrum disorder"
+          "Autism spectrum disorder, unspecified"
         ]
       }
     ]
@@ -43,17 +43,17 @@
     "disorders": [
       "Single episode depressive disorder",
       "Recurrent depressive disorder",
-      "Bipolar I disorder",
-      "Bipolar II disorder",
+      "Bipolar I disorder, unspecified",
+      "Bipolar II disorder, unspecified",
       "Generalized anxiety disorder",
       "Post-traumatic stress disorder",
       "Complex post-traumatic stress disorder",
-      "Obsessive-compulsive disorder",
+      "Obsessive-compulsive disorder, unspecified",
       "Anorexia Nervosa, unspecified",
       "Bulimia nervosa",
       "Binge-eating disorder",
-      "Borderline personality disorder",
-      "Autism spectrum disorder",
+      "Personality disorder, severity unspecified",
+      "Autism spectrum disorder, unspecified",
       "Attention deficit hyperactivity disorder",
       "Disorders due to substance use"
     ]
@@ -71,7 +71,7 @@
     ],
     "disorders": [
       "Depressive disorders",
-      "Bipolar disorders",
+      "Bipolar I disorder, unspecified",
       "Sleep-wake disorders",
       "Disorders due to substance use",
       "Anorexia Nervosa, unspecified",
@@ -83,19 +83,19 @@
     "threshold": 26,
     "direction": "gt",
     "disorders": [
-      "Bipolar I disorder",
-      "Bipolar II disorder",
+      "Bipolar I disorder, unspecified",
+      "Bipolar II disorder, unspecified",
       "Cyclothymic disorder",
       "Attention deficit hyperactivity disorder",
-      "Obsessive-compulsive disorder",
-      "Borderline personality disorder"
+      "Obsessive-compulsive disorder, unspecified",
+      "Personality disorder, severity unspecified"
     ]
   },
   "BAS Drive": {
     "threshold": 13,
     "direction": "gt",
     "disorders": [
-      "Bipolar I disorder",
+      "Bipolar I disorder, unspecified",
       "Cyclothymic disorder",
       "Gambling disorder"
     ]
@@ -104,8 +104,8 @@
     "threshold": 12,
     "direction": "gt",
     "disorders": [
-      "Bipolar I disorder",
-      "Bipolar II disorder",
+      "Bipolar I disorder, unspecified",
+      "Bipolar II disorder, unspecified",
       "Attention deficit hyperactivity disorder",
       "Bulimia nervosa",
       "Binge-eating disorder",
@@ -117,7 +117,7 @@
     "threshold": 13,
     "direction": "gt",
     "disorders": [
-      "Bipolar I disorder",
+      "Bipolar I disorder, unspecified",
       "Disorders due to substance use"
     ]
   },
@@ -129,7 +129,7 @@
       "Recurrent depressive disorder",
       "Persistent depressive disorder",
       "Schizophrenia",
-      "Autism spectrum disorder"
+      "Autism spectrum disorder, unspecified"
     ]
   },
   "PANAS NA": {
@@ -143,13 +143,13 @@
       "Post-traumatic stress disorder",
       "Complex post-traumatic stress disorder",
       "Adjustment disorder",
-      "Obsessive-compulsive disorder",
+      "Obsessive-compulsive disorder, unspecified",
       "Body dysmorphic disorder",
-      "Borderline personality disorder",
+      "Personality disorder, severity unspecified",
       "Anorexia Nervosa, unspecified",
       "Bulimia nervosa",
       "Binge-eating disorder",
-      "Autism spectrum disorder",
+      "Autism spectrum disorder, unspecified",
       "Attention deficit hyperactivity disorder"
     ]
   }

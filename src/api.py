@@ -3,7 +3,7 @@ import logging                # For logging events and debug/error messages
 import requests               # For making HTTP requests to the ICD-11 API
 import urllib.parse           # For safely encoding query parameters in URLs
 from typing import TypedDict  # For defining structured dictionaries with type hints
-from config import (SIMILARITY, ICD_CLIENT_ID, ICD_CLIENT_SECRET, AUTH_URL, SEARCH_URL)
+from config import SIMILARITY, ICD_CLIENT_ID, ICD_CLIENT_SECRET, AUTH_URL, SEARCH_URL
 
 # Setup basic logging configuration
 logging.basicConfig(level=logging.INFO)
@@ -102,18 +102,29 @@ def icd_search(term: str, token: str) -> list[dict]:
         return []
 
     try:
-        results = []
         entities = response.json().get('destinationEntities', [])
-        for entity in entities:
-            if float(entity.get('score', 0)) >= SIMILARITY:
-                results.append(entity)
-        logger.info(f"Found {len(results)} valid results for '{term}'")  # Valid results found
-        return results
+        if not entities:
+            logger.info(f"No entities returned for '{term}'")
+            return []
+
+        # Ordina per similarità discendente
+        sorted_entities = sorted(entities, key=lambda x: float(x.get('score', 0)), reverse=True)
+        
+        # Prendi il primo con score >= SIMILARITY
+        best_match = sorted_entities[0]
+        if float(best_match.get('score', 0)) >= SIMILARITY:
+            logger.info(f"Top match for '{term}': {best_match.get('score')}")
+            return [best_match]
+        else:
+            logger.info(f"No match over threshold for '{term}' — top score was {best_match.get('score')}")
+            return []
+
     except Exception as e:
-        logger.error(f"Error parsing JSON response: {e}")  # Error parsing JSON
+        logger.error(f"Error parsing JSON response: {e}")
         return []
 
 def add_icd_results_to_context(terms: list[str]) -> tuple[list[str], list[RAGResult]]:
+
     """
     For each search term, performs an ICD-11 API search and formats results for context injection.
 
@@ -139,8 +150,13 @@ def add_icd_results_to_context(terms: list[str]) -> tuple[list[str], list[RAGRes
             logger.info(f"No result ICD for: {name}")
             continue
 
+        seen_codes = set()
         for ent in icd_results:
             norm = normalize_icd_entity(ent)  # Normalization 
+
+            if norm["code"] in seen_codes:
+                continue
+            seen_codes.add(norm["code"])
 
             # Build structured chunk text
             chunk_text = (

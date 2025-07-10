@@ -88,57 +88,34 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
     question_type = detect_question_type(user_input)  # Detect intent
     logger.info(f"User intent detected: {question_type.upper()}")  # Log intent
 
-    rag_context = ""
-    icd_context = ""
     rag_results = []  # Lists for aggregated context
     context = ""  # Full assembled context text
 
     # Branch for diagnosis or clinical questions
     if question_type in ("diagnosis", "clinical"):
-        questionnaires, scores = extract_scores(user_input)    # Parse provided questionnaire found and scores
+        questionnaires, scores = extract_scores(user_input)  # Parse provided questionnaire found and scores
         disorders = score_to_disorders(scores, question_type)  # Map scores to possible disorders
         logger.info(f"Used questionnaires: {questionnaires}")
         logger.info(f"Suspected disorders: {disorders}")
 
-        rag_chunks = []
-
-        if question_type == "diagnosis":
-        # Add questionnaire-specific YAML context
-            for q in questionnaires:
-                match = next(((i, name) for i, name in rag_engine.questionnaires if q.lower() in name.lower()), None)
-
-                if match:
-                    idx, _ = match
-                    text = rag_engine.corpus_chunks[idx]["text"]
-                    src = os.path.basename(rag_engine.corpus_chunks[idx]["source"])
-                    rag_chunks.append(text)
-                    rag_results.append({
-                        "score": 1.0,
-                        "text": text,
-                        "source": src
-                    })
-                else:
-                    logger.info(f"No chunk matched questionnaire '{q}'")
-
-        rag_context = "\n\n".join(rag_chunks)
-
         # Add ICD context based on suspected disorders
         icd_chunks, icd_rags = add_icd_results_to_context(disorders)
-        icd_context = "\n\n".join(icd_chunks)
+        context = "\n\n".join(icd_chunks)
         rag_results += icd_rags
 
     # Branch for interpretation requests, answered by the LLM without RAG
     elif question_type == "interpretation":
         # No context is fetched; context and rag_results remain empty
-        rag_context = user_input  # The model will answer based on its pre-trained knowledge
+        context = user_input  # The model will answer based on its pre-trained knowledge
         rag_results = "RAG Disabled"  # For log view
 
+    # Branch for definition/comparison requests
     else:
         terms = detect_disorders(user_input)
         logger.info(f"Extracted disorder terms: {terms}")
         
         icd_chunks, icd_rags = add_icd_results_to_context(terms)
-        icd_context = "\n\n".join(icd_chunks)
+        context = "\n\n".join(icd_chunks)
         rag_results = icd_rags
 
         # If no ICD info found, fallback to YAML-based RAG
@@ -149,18 +126,16 @@ def chat_with_llama(user_input: str)  -> Generator[str, None, None]:
             tokens = llm.tokenize(combined.encode("utf-8"))
             max_ct = N_CTX - MAX_TOKENS - 128
             context = llm.detokenize(tokens[:max_ct]).decode("utf-8") + "\n[...]"
-            rag_context = context
 
     # Load prompt template 
     prompt_tmpl = load_prompt_template(question_type)
     if question_type in ("diagnosis", "clinical"):
         prompt = prompt_tmpl.format(
-            rag_context=rag_context,
-            icd_context=icd_context,
+            context=context,
             user_input=user_input
         )
     else:
-        prompt = prompt_tmpl.format(context=rag_context, user_input=user_input)
+        prompt = prompt_tmpl.format(context=context, user_input=user_input)
     
     # Calculate available tokens
     tok_prompt = llm.tokenize(prompt.encode("utf-8"))

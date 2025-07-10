@@ -234,3 +234,4 @@ class SimpleRAG:
             }
             for i in top_indices
         ]
+    

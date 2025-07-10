@@ -18,7 +18,7 @@ MAX_TOKENS = 1024                          # Max length of the generated output 
 # -----------------------------
 LLAMA_3 = "Meta-Llama-3-8B-Instruct.Q5_K_M.gguf"                                # Local large language model (quantized, 5-bit)
 EMBEDDING_MODEL = "pritamdeka/PubMedBERT-mnli-snli-scinli-scitail-mednli-stsb"  # Sentence embedding model for RAG retrieval
-TOP_K = 1                                                                       # Number of top documents to retrieve
+TOP_K = 10                                                                      # Number of top documents to retrieve
 TEMPERATURE = 0.5                                                               # LLM creativity level ("empathy" for clinical tone)
 SIMILARITY = 0.80                                                               # Minimum similarity threshold for RAG results
 
